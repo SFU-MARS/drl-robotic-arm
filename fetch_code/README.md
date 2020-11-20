@@ -7,8 +7,8 @@ Instructions are written below.
 
 Must have MuJoCo installed together with OpenAI Spinning Up. Refer to the links below:
 
-- [https://spinningup.openai.com/en/latest/user/installation.html](OpenAI Spinning Up installation).
-- [https://github.com/openai/mujoco-py](mujoco-py installation)
+- [OpenAI Spinning Up installation](https://spinningup.openai.com/en/latest/user/installation.html).
+- [mujoco-py installation](https://github.com/openai/mujoco-py)
 
 #### fetchPickAndPlace.py
 
