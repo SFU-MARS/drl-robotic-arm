@@ -180,9 +180,12 @@ def run_pipeline(env, policy_dict, max_ep_len=None, num_episodes=100, render=Tru
         o_subset = np.concatenate((o[0:3], o[3:6], o[0:3], o[9:11], o[20:25]))
         a = policy_dict['reach'](o_subset)
 
+        # Force the gripper to close. 
+        a_ = [a[0],a[1],a[2],0]
+
         # ################################################
 
-        o, r, d, _ = env.step(a)
+        o, r, d, _ = env.step(a_)
         ep_ret += r
         ep_len += 1
 
