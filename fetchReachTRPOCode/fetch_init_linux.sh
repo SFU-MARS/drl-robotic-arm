@@ -17,4 +17,4 @@ fi
 
 . $VENV_DIR/bin/activate
 
-$PYTHON_CMD $SCRIPT_DIR/pipeline.py
+$PYTHON_CMD $SCRIPT_DIR/fetchReach.py

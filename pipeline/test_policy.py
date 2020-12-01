@@ -147,6 +147,10 @@ def run_pipeline(env, policy_dict, max_ep_len=None, num_episodes=100, render=Tru
 
     logger = EpochLogger()
     o, r, d, ep_ret, ep_len, n = env.reset(), 0, False, 0, 0, 0
+    phase = "reach"
+
+    success = np.zeros(num_episodes, dtype=np.bool)
+
     while n < num_episodes:
         if render:
             env.render()
@@ -177,22 +181,70 @@ def run_pipeline(env, policy_dict, max_ep_len=None, num_episodes=100, render=Tru
         # elements are defined here
         # https://github.com/openai/gym/blob/master/gym/envs/robotics/fetch_env.py
         # on line 112.
-        o_subset = np.concatenate((o[0:3], o[3:6], o[0:3], o[9:11], o[20:25]))
-        a = policy_dict['reach'](o_subset)
 
-        # Force the gripper to close. 
-        a_ = [a[0],a[1],a[2],0]
+        # des_goal = o[28:] + [0,0,0.1]
+        if phase == "reach":
+            ahv_goal = o[0:3]
+            des_goal = o[3:6] + [0,0,0.1]
 
+            o_subset = np.concatenate((ahv_goal, des_goal, o[0:3], o[9:11], o[20:25]))
+            a = policy_dict['reach'](o_subset)
+
+            # force the gripper open with applying torque 1 
+            a_ = [a[0],a[1],a[2],1]
+            if np.linalg.norm(ahv_goal - des_goal, axis=-1) < 0.045:
+                phase = "down"
+        elif phase == "down":
+            ahv_goal = o[0:3]
+            des_goal = o[3:6] + [0.005,0,-0.0005]
+
+            o_subset = np.concatenate((ahv_goal, des_goal, o[0:3], o[9:11], o[20:25]))
+            a = policy_dict['reach'](o_subset)
+            a_ = [a[0],a[1],a[2],0.25]
+            if np.linalg.norm(ahv_goal - des_goal, axis=-1) < 0.045:
+                phase = "pick"
+                # cnt serves as a timer  
+                cnt = 500
+        elif phase == "pick":
+            ahv_goal = o[0:3]
+            des_goal = o[3:6] + [0.005,0,-0.0005]
+
+            o_subset = np.concatenate((ahv_goal, des_goal, o[0:3], o[9:11], o[20:25]))
+            a = policy_dict['reach'](o_subset)
+            # force the gripper close with applying torque 1 
+            a_ = [a[0],a[1],a[2],-1]
+            cnt = cnt - 1
+            if (np.linalg.norm(ahv_goal - des_goal, axis=-1) < 0.03) & (cnt > 0):
+                phase = "place"
+        elif phase == "place":
+            ahv_goal = o[0:3]
+            des_goal = o[28:]
+
+            o_subset = np.concatenate((ahv_goal, des_goal, o[0:3], o[9:11], o[20:25]))
+            a = policy_dict['reach'](o_subset)
+            a_ = [a[0],a[1],a[2],-1]
+            if np.linalg.norm(ahv_goal - des_goal, axis=-1) < 0.03:
+                phase = "place"
+
+        
         # ################################################
 
         o, r, d, _ = env.step(a_)
         ep_ret += r
         ep_len += 1
 
+        if np.linalg.norm(o[25:28] - o[28:31], ord=2) < 0.02:
+            success[n] = True
+
         if d or (ep_len == max_ep_len):
             logger.store(EpRet=ep_ret, EpLen=ep_len)
             print('Episode %d \t EpRet %.3f \t EpLen %d'%(n, ep_ret, ep_len))
+
+            success_rate = np.sum(success[:n+1]) / (n+1)
+            print('Episode %d \t SuccessRate %.3f'%(n, success_rate))
+
             o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
+            phase = "reach"
             n += 1
 
     logger.log_tabular('EpRet', with_min_and_max=True)

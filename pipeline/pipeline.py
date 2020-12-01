@@ -23,12 +23,12 @@ class ObsWrapper(gym.ObservationWrapper):
 env = ObsWrapper(gym.make('FetchPickAndPlace-v1'))
 
 # load models
-_, get_reach_action = load_policy_and_env('../fetchReachV1Code/pretrainedNetwork')
-_, dummy_action = load_policy_and_env('../../reach_block_output_model')
+_, get_reach_action = load_policy_and_env('./pretrainedNetwork/gripperEnabled-v02')
+# _, dummy_action = load_policy_and_env('../../reach_block_output_model')
 
 policy_dict = {
     'reach' : get_reach_action,
-    'dummy' : dummy_action
+    # 'dummy' : dummy_action
 }
 
 run_pipeline(env, policy_dict)

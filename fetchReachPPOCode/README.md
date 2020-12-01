@@ -18,3 +18,4 @@ Source code based on the OpenAI Spinning Up repo to Train a PPO network under th
 
 Run the command `python -m spinup.run test_policy <dir to /pretrainedNetwork> --itr 90` under the spinningup directory.
 
+## Models
